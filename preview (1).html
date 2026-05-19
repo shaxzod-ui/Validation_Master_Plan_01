@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMP — Валидационный Мастер-План | MEDIOFARM</title>
+<style>
+:root {
+  --red:#E24B4A;--red-bg:#FCEBEB;--red-text:#A32D2D;
+  --yellow:#EF9F27;--yellow-bg:#FAEEDA;--yellow-text:#854F0B;
+  --green:#639922;--green-bg:#EAF3DE;--green-text:#3B6D11;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --gray:#888780;--gray-bg:#F1EFE8;--gray-text:#5F5E5A;
+  --border:rgba(0,0,0,0.1);
+  --text:#1a1a18;--text2:#5F5E5A;
+  --bg:#fff;--bg2:#F8F7F4;--bg3:#EDECE8;
+  --radius:8px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --text:#E8E6E0;--text2:#B4B2A9;
+    --bg:#1c1c1a;--bg2:#252522;--bg3:#2e2e2b;
+    --border:rgba(255,255,255,0.1);
+    --red-bg:#3a1515;--yellow-bg:#3a2a08;--green-bg:#1a2e08;--blue-bg:#0a2040;--gray-bg:#2a2a28;
+    --red-text:#F09595;--yellow-text:#FAC775;--green-text:#C0DD97;--blue-text:#B5D4F4;--gray-text:#D3D1C7;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg2);color:var(--text);font-size:13px;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+.top-bar{background:var(--bg);border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;}
+.logo{font-size:15px;font-weight:600;color:var(--blue);}
+.logo sub{font-size:11px;font-weight:400;color:var(--text2);margin-left:6px;}
+.today-badge{background:var(--blue-bg);color:var(--blue-text);font-size:11px;padding:3px 10px;border-radius:20px;margin-left:auto;}
+.btn{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:6px 13px;font-size:12px;color:var(--text);cursor:pointer;}
+.btn:hover{background:var(--bg2);}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn-blue:hover{opacity:.88;}
+.btn-danger{color:var(--red-text);border-color:var(--red);}
+.btn-danger:hover{background:var(--red-bg);}
+
+.summary{display:flex;gap:10px;padding:12px 18px;flex-shrink:0;flex-wrap:wrap;}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 16px;flex:1;min-width:110px;}
+.card-num{font-size:26px;font-weight:600;line-height:1;}
+.card-lbl{font-size:11px;color:var(--text2);margin-top:3px;}
+.c-r .card-num{color:var(--red);}
+.c-y .card-num{color:var(--yellow);}
+.c-g .card-num{color:var(--green);}
+.c-b .card-num{color:var(--blue);}
+
+.controls{padding:0 18px 10px;display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;align-items:center;}
+.controls input,.controls select{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-size:12px;color:var(--text);outline:none;}
+.controls input{width:190px;}
+.controls input:focus,.controls select:focus{border-color:var(--blue);}
+
+.tbl-outer{flex:1;overflow:auto;padding:0 18px 18px;}
+table{width:100%;border-collapse:collapse;background:var(--bg);border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border);min-width:980px;}
+
+thead th{position:sticky;top:0;z-index:20;background:var(--bg3);color:var(--text2);font-weight:500;font-size:11px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;user-select:none;}
+thead th.sortable{cursor:pointer;}
+thead th.sortable:hover{color:var(--text);}
+thead th.asc::after{content:' ↑';}
+thead th.desc::after{content:' ↓';}
+
+tr.sec-hdr td{background:var(--blue-bg);color:var(--blue-text);font-weight:500;font-size:11px;padding:6px 10px;border-bottom:0.5px solid var(--border);}
+
+tr.sub-row td{padding:10px 12px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+tr.sub-row:hover td{background:var(--bg2);}
+
+td.eq-info{padding:8px 10px;vertical-align:top;border-right:0.5px solid var(--border);background:var(--bg);}
+tr.sub-row:hover td.eq-info{background:var(--bg);}
+.eq-name{font-weight:600;font-size:15px;line-height:1.5;color:var(--text);}
+.eq-meta{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.4;}
+.room-pill{display:inline-block;background:var(--gray-bg);color:var(--gray-text);font-size:10px;padding:1px 7px;border-radius:4px;margin-top:4px;}
+.edit-link{display:inline-block;margin-top:6px;font-size:11px;color:var(--blue-text);cursor:pointer;border:none;background:none;padding:0;}
+.edit-link:hover{text-decoration:underline;}
+
+.vtype{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;white-space:nowrap;}
+.vt-IQ{background:#E6F1FB;color:#0C447C;}
+.vt-OQ{background:#EAF3DE;color:#3B6D11;}
+.vt-PQ{background:#FAEEDA;color:#854F0B;}
+.vt-PV{background:#FBEAF0;color:#72243E;}
+.vt-x{background:var(--gray-bg);color:var(--gray-text);}
+
+.days{font-weight:600;white-space:nowrap;}
+.dr{color:var(--red);}
+.dy{color:var(--yellow);}
+.dg{color:var(--green);}
+
+.sbadge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500;}
+.sbr{background:var(--red-bg);color:var(--red-text);}
+.sby{background:var(--yellow-bg);color:var(--yellow-text);}
+.sbg{background:var(--green-bg);color:var(--green-text);}
+.sbn{background:var(--gray-bg);color:var(--gray-text);}
+
+.nv{color:var(--text2);font-style:italic;font-size:11px;}
+
+.toast{position:fixed;bottom:18px;right:18px;background:#1a1a18;color:#fff;padding:8px 16px;border-radius:var(--radius);font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+.toast.show{opacity:1;}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--bg);border-radius:12px;border:0.5px solid var(--border);padding:22px;width:580px;max-width:96vw;max-height:92vh;overflow-y:auto;}
+.modal h2{font-size:15px;font-weight:500;margin-bottom:18px;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;}
+.field input,.field select{width:100%;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:7px 11px;font-size:13px;color:var(--text);outline:none;}
+.field input:focus,.field select:focus{border-color:var(--blue);}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mfoot{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+.sub-block{border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px;background:var(--bg2);position:relative;}
+.sub-block h3{font-size:12px;font-weight:500;margin-bottom:10px;color:var(--text2);}
+.rm-sub{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;color:var(--red-text);font-size:16px;line-height:1;}
+.add-sub-btn{width:100%;border:0.5px dashed var(--border);border-radius:var(--radius);padding:8px;font-size:12px;color:var(--text2);cursor:pointer;background:none;margin-bottom:4px;}
+.add-sub-btn:hover{background:var(--bg2);color:var(--text);}
+
+@media(max-width:600px){
+  .frow{grid-template-columns:1fr;}
+  .top-bar,.summary,.controls,.tbl-outer{padding-left:12px;padding-right:12px;}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo">MEDIOFARM <sub>Валидационный Мастер-План (VMP)</sub></div>
+  <div class="today-badge" id="todayLbl"></div>
+  <button class="btn btn-blue" onclick="openAdd()">+ Добавить оборудование</button>
+  <button class="btn btn-danger" onclick="resetData()">↺ Сброс данных</button>
+</div>
+
+<div class="summary">
+  <div class="card c-r"><div class="card-num" id="cR">0</div><div class="card-lbl">🔴 Просрочено</div></div>
+  <div class="card c-y"><div class="card-num" id="cY">0</div><div class="card-lbl">🟡 Внимание ≤60 дн.</div></div>
+  <div class="card c-g"><div class="card-num" id="cG">0</div><div class="card-lbl">🟢 В норме</div></div>
+  <div class="card c-b"><div class="card-num" id="cA">0</div><div class="card-lbl">Всего строк</div></div>
+</div>
+
+<div class="controls">
+  <input id="qS" type="text" placeholder="🔍 Поиск по названию / модели..." oninput="render()">
+  <select id="qL" onchange="render()"><option value="">Все помещения</option></select>
+  <select id="qSc" onchange="render()"><option value="">Все цехи</option></select>
+  <select id="qSt" onchange="render()">
+    <option value="">Все статусы</option>
+    <option value="r">Просрочено</option>
+    <option value="y">Внимание</option>
+    <option value="g">В норме</option>
+    <option value="n">Нет даты</option>
+  </select>
+  <button class="btn" onclick="clearF()">Сбросить</button>
+</div>
+
+<div class="tbl-outer">
+<table>
+  <thead><tr>
+    <th style="width:28px">#</th>
+    <th style="min-width:320px">Наименование оборудования</th>
+    <th style="width:75px" class="sortable" onclick="srt('type')">Форма</th>
+    <th style="width:100px" class="sortable" onclick="srt('dateRep')">Дата отчёта</th>
+    <th style="width:105px" class="sortable" onclick="srt('dateNext')">Дата ревалидации</th>
+    <th style="width:65px">Период</th>
+    <th style="width:95px" class="sortable" onclick="srt('days')">Дней до срока</th>
+    
+    <th style="min-width:120px">№ Отчёта</th>
+    <th style="min-width:90px">Примечание</th>
+  </tr></thead>
+  <tbody id="TB"></tbody>
+</table>
+</div>
+
+<div class="toast" id="toast">💾 Сохранено</div>
+
+<div class="overlay" id="overlay">
+<div class="modal">
+  <h2 id="mTitle">Добавить оборудование</h2>
+  <div class="frow">
+    <div class="field"><label>Наименование *</label><input id="mName" type="text" placeholder="Название оборудования"></div>
+    <div class="field"><label>Цех / Раздел</label><input id="mSec" type="text" placeholder="Цех инфузионных растворов"></div>
+  </div>
+  <div class="frow">
+    <div class="field"><label>Модель</label><input id="mMod" type="text" placeholder="JKCX"></div>
+    <div class="field"><label>Серийный №</label><input id="mSer" type="text" placeholder="ETORCH2022..."></div>
+  </div>
+  <div class="field"><label>Помещение (№ комнаты)</label><input id="mRoom" type="text" placeholder="2/ 1.1"></div>
+
+  <div style="font-size:12px;color:var(--text2);margin:16px 0 8px;padding-top:14px;border-top:0.5px solid var(--border);">
+    Строки валидации (IQ / OQ / PQ / PV и т.д.)
+  </div>
+  <div id="subRows"></div>
+  <button class="add-sub-btn" onclick="addSubRow()">+ Добавить строку валидации</button>
+
+  <div class="mfoot">
+    <button class="btn" onclick="closeModal()">Отмена</button>
+    <button class="btn btn-blue" onclick="saveModal()">Сохранить</button>
+  </div>
+</div>
+</div>
+
+<script>
+const TODAY = (() => { const d=new Date(); d.setHours(0,0,0,0); return d; })();
+document.getElementById('todayLbl').textContent = 'Сегодня: ' + TODAY.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+
+const STORE = 'vmp_mf_v3';
+let DB = [];
+let _uid = 2000;
+let _sortCol = 'days', _sortDir = 1;
+let _editId = null;
+
+/* ── CALC ── */
+function addM(dateStr, months) {
+  if (!dateStr || !months) return null;
+  const d = new Date(dateStr); if (isNaN(d)) return null;
+  d.setMonth(d.getMonth() + parseInt(months));
+  return d;
+}
+function daysL(dn) {
+  if (!dn) return null;
+  return Math.round((dn - TODAY) / 86400000);
+}
+function stOf(dl) {
+  if (dl===null) return 'n';
+  if (dl<0) return 'r';
+  if (dl<=60) return 'y';
+  return 'g';
+}
+function fmtD(d) {
+  if (!d) return '';
+  return (typeof d==='string'?new Date(d):d).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function vtCls(t) {
+  return {IQ:'vt-IQ',OQ:'vt-OQ',PQ:'vt-PQ',PV:'vt-PV'}[t]||'vt-x';
+}
+
+/* ── STORAGE ── */
+function save() {
+  localStorage.setItem(STORE, JSON.stringify({db:DB,uid:_uid}));
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),1800);
+}
+function loadDB() {
+  try {
+    const s=localStorage.getItem(STORE);
+    if (s) { const p=JSON.parse(s); DB=p.db; _uid=p.uid||2000; return; }
+  } catch(e){}
+  DB = defaultData();
+}
+function resetData() {
+  if (!confirm('Сбросить все данные к исходным из документа? Ваши изменения будут удалены.')) return;
+  _uid=2000; DB=defaultData(); save(); populateFilters(); render();
+}
+
+/* ── DEFAULT DATA ── */
+function mk(section, name, model, serial, room, rows) {
+  return {
+    id: _uid++, section, name, model, serial, room,
+    rows: rows.map(r=>({id:_uid++,type:r[0],dateRep:r[1]||'',period:r[2]||36,protocol:r[3]||'',note:r[4]||''}))
+  };
+}
+function defaultData() {
+  return [
+    mk('Цех инфузионных растворов','Предварительная мойка флаконов (Rough Washing Machine)','JKCX','ETORCH20221217-1','2/ 1.1',[
+      ['IQ','2023-11-22',36,'ET22111-1_JKCX_IQ',''],['OQ','2023-12-27',36,'ET22111-1_JKCX_OQ',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Финишная мойка флаконов (Fine Washing Machine)','JKJX','ETORCH20221217-2','2/ 1.3',[
+      ['IQ','2023-11-22',36,'',''],['OQ','2023-12-28',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Стерилизационный тоннель (Hot Air Sterilization Tunnel)','JKRX','Etorch20221217-3','2/ 1.3',[
+      ['IQ','2023-11-25',36,'',''],['OQ','2023-12-29',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Розлив и укупорка флаконов (Filling & Stoppering Machine)','JKGSZ-10','ETORCH20221216-4','2/ 1.15',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],['Целостность HEPA','',6,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Укупорочная машина (Capping Machine)','JKZ-2','Etorch20221217-5','2/ 1.15',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Ёмкость с мешалкой 5000L (Mixing Tank)','5000L','C-2022-42','2/ 1.13',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Ёмкость с мешалкой 2500L (Mixing Tank)','2500L','C-2022-43','2/ 1.13',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Визуальная инспекция флаконов (Visual Inspection)','YJA-90D','Etorch20210927','2/ 1.19',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Стерилизатор 0.25 м³','YG-0.25','Etorch20221219-3','2/ 1.16',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Стерилизатор 5.0 м³','SG-5.0','Etorch20221219-1','2/ 1.17',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Мойка и стерилизация пробок (Rubber Stopper Washing)','KJQS-4ES','Etorch20221218','2/ 1.22',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Этикетировочная машина (Automatic Labeling Machine)','JKLT','ETORCH20221217-6','2/ 1.20',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инфузионных растворов','Квалификация чистых помещений','-','-','2/ 1.**',[
+      ['IQ','',12,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Цех инъекционных растворов','Розлив и запайка ампул','AGF12','2019-003afc','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],['PV','',36,'',''],
+    ]),
+    mk('Цех инъекционных растворов','Стерилизационный тоннель ампульный','SZA620','2019-003atc','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инъекционных растворов','Мойка ампул','ACX120','2019-003awc','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инъекционных растворов','Реактор 1000L ампульного цеха','PYG-1000','19080905','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],
+    ]),
+    mk('Цех инъекционных растворов','Реактор 200L ампульного цеха','PYG-200','19080906','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],
+    ]),
+    mk('Цех инъекционных растворов','Стерилизатор 2.0 м³','SG-2.0','Etorch20221219-2','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инъекционных растворов','Стерилизатор 0.36 м³','YG-0.36','14YG284','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инъекционных растворов','Инспекционная машина для ампул (Light Inspection)','JAZ20-400X','ETORCH20230228','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех инъекционных растворов','Лиофилизатор (Lyophilizer)','TFD-0.5','ETORCH20230103','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],['PV','',36,'',''],
+    ]),
+    mk('Цех ГНК (Глазные капли)','Ёмкость с мешалкой 2000L (Mixing Tank)','2000L','C-2022-44','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],
+    ]),
+    mk('Цех ГНК (Глазные капли)','Ёмкость с мешалкой 200L (Mixing Tank)','200L','C-2022-45','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],
+    ]),
+    mk('Цех ГНК (Глазные капли)','Наполнение и укупорка флаконов ГНК (Eye Drop Filling)','JKDY-4','ETORCH20221216-2','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],['PV','',36,'',''],
+    ]),
+    mk('Цех ГНК (Глазные капли)','Сортировка и продувка флаконов ГНК (Unscrambler)','JKLPQX-1','ETORCH20221216-1','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех ГНК (Глазные капли)','Этикетировочная машина ГНК','JKLT','ETORCH20221216-4','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех ГНК (Глазные капли)','Стерилизатор 0.25 м³ ГНК','YG-0.25','Etorch20221219','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Цех ГНК (Глазные капли)','Стерилизатор 1.5 м³ ГНК','SG-1.5','14SG343','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],
+    ]),
+    mk('Вспомогательное оборудование','Линия подготовки воды очищенной (Purified Water System)','WTRO-2000','ETORCH20221220','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',36,'',''],['PV','',12,'',''],
+    ]),
+    mk('Вспомогательное оборудование','Дистиллятор (Multi-effect Water Distiller)','LDS1500-6','A2022056-01','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',36,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Вспомогательное оборудование','Винтовой компрессор с осушителем','ELANG ZRCW-50SA-PM','CJKH22LA382','3 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Вспомогательное оборудование','Котёл паровой','WNS2-10','YU354','Котельная',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Вспомогательное оборудование','Азотный генератор','TY3-03','SN:TYZAX362408006','3 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Вспомогательное оборудование','Чиллер 125 кВт №1','CTX2-T260HF','603EHAAAL700001','3 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Вспомогательное оборудование','AHU-1 Воздухоподготовка 25000 м³/ч','SHV 2424','A50N250PRM4S100Y0I','3 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Вспомогательное оборудование','AHU-2 Воздухоподготовка 7000 м³/ч','SHV 1220','A50N070PRM4S100Y0I','3 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Вспомогательное оборудование','AHU-3 Воздухоподготовка 23000 м³/ч','SHV 2424','A50N230PRM4S100Y0I','3 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Вспомогательное оборудование','Анализатор ТОС (TOC Analyser)','HTY-DIL 500-OL','—','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Автоклав №1','LMQ.C','2023A226','2 эт. МЛ',[
+      ['IQ','',36,'',''],['OQ','',6,'',''],['PQ','',6,'',''],
+    ]),
+    mk('Лабораторное оборудование','Автоклав №2','LMQ.C','2023A269','2 эт. МЛ',[
+      ['IQ','',36,'',''],['OQ','',6,'',''],['PQ','',6,'',''],
+    ]),
+    mk('Лабораторное оборудование','Автоклав №3','LMQ.C','2023A573','2 эт. МЛ',[
+      ['IQ','',36,'',''],['OQ','',6,'',''],['PQ','',6,'',''],
+    ]),
+    mk('Лабораторное оборудование','Ламинарный шкаф №1 (Laminar Bench)','YN-CB-01','Стол №1','2 эт. МЛ',[
+      ['IQ','',36,'',''],['OQ','',6,'',''],['PQ','',6,'',''],
+    ]),
+    mk('Лабораторное оборудование','Ламинарный шкаф №2','YN-CB-02','Стол №2','2 эт. МЛ',[
+      ['IQ','',36,'',''],['OQ','',6,'',''],['PQ','',6,'',''],
+    ]),
+    mk('Лабораторное оборудование','ВЭЖХ Agilent 1260 Infinity LC №1','Agilent 1260','HPLC2 YSSX SW','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','ВЭЖХ Agilent 1260 Infinity LC №2','Agilent 1260','LC 1260 N1','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Спектрофотометр UV-1900i (Shimadzu)','UV-1900i','A12535850667 US','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','pH-метр Fiveeasy F20 №1','Fiveeasy F20','C151236949','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','pH-метр Fiveeasy F20 №2','Fiveeasy F20','C236761154','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Осмометр OSMOMAT 3000','OSMOMAT 3000','SN 300250100','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Механический счётчик частиц SVSS','SVSS','350-1029','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Поляриметр GP70','GP70','500546','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Камера стабильности (Drug Stability Chamber)','SHH-250SD','2201S45','3 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],['PQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Весы аналитические СР223С №1','СР223С','В63963283','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Весы аналитические СР223С №2','СР223С','В4410700','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Весы аналитические HPB-2210Di','HPB-2210Di','CHA2310485','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Сухожаровой шкаф ZX-250','ZX-250','1410653','2 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Сухожаровой шкаф ZX-125 №1','ZX-125','1410652','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Ультразвуковая баня GTSONIC-D13','GTSONIC-D13','BW0092AKF001','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+    mk('Лабораторное оборудование','Муфельная печь МП-2УМ','МП-2УМ','49802','1 этаж',[
+      ['IQ','',36,'',''],['OQ','',12,'',''],
+    ]),
+  ];
+}
+
+/* ── FILTERS POPULATE ── */
+function populateFilters() {
+  const rooms = [...new Set(DB.map(e=>e.room).filter(Boolean))].sort();
+  const secs  = [...new Set(DB.map(e=>e.section).filter(Boolean))].sort();
+  document.getElementById('qL').innerHTML  = '<option value="">Все помещения</option>' + rooms.map(r=>`<option>${r}</option>`).join('');
+  document.getElementById('qSc').innerHTML = '<option value="">Все цехи</option>'      + secs.map(s=>`<option>${s}</option>`).join('');
+}
+function clearF() {
+  ['qS','qL','qSc','qSt'].forEach(id=>document.getElementById(id).value='');
+  render();
+}
+
+/* ── SORT ── */
+function srt(col) {
+  document.querySelectorAll('th.sortable').forEach(t=>t.classList.remove('asc','desc'));
+  if (_sortCol===col) _sortDir=-_sortDir; else {_sortCol=col;_sortDir=1;}
+  event.target.classList.add(_sortDir===1?'asc':'desc');
+  render();
+}
+
+/* ── RENDER ── */
+function render() {
+  const q  = document.getElementById('qS').value.toLowerCase();
+  const fL = document.getElementById('qL').value;
+  const fSc= document.getElementById('qSc').value;
+  const fSt= document.getElementById('qSt').value;
+
+  // global stats (no filter)
+  let cR=0,cY=0,cA=0,cG=0;
+  DB.forEach(eq=>eq.rows.forEach(r=>{
+    const st=stOf(daysL(addM(r.dateRep,r.period)));
+    cA++; if(st==='r')cR++; else if(st==='y')cY++; else if(st==='g')cG++;
+  }));
+  document.getElementById('cR').textContent=cR;
+  document.getElementById('cY').textContent=cY;
+  document.getElementById('cG').textContent=cG;
+  document.getElementById('cA').textContent=cA;
+
+  // filter
+  let visible = DB.filter(eq=>{
+    if (fL && eq.room!==fL) return false;
+    if (fSc && eq.section!==fSc) return false;
+    if (q && !eq.name.toLowerCase().includes(q) && !eq.model.toLowerCase().includes(q) && !eq.serial.toLowerCase().includes(q)) return false;
+    if (fSt && !eq.rows.some(r=>stOf(daysL(addM(r.dateRep,r.period)))===fSt)) return false;
+    return true;
+  });
+
+  // sort by worst days per equipment
+  visible.sort((a,b)=>{
+    const worst = eq => {
+      const days = eq.rows.map(r=>{ const d=daysL(addM(r.dateRep,r.period)); return d===null?99999:d; });
+      return Math.min(...days);
+    };
+    return (worst(a)-worst(b))*_sortDir;
+  });
+
+  let html='', lastSec='', eqN=0;
+  visible.forEach(eq=>{
+    if (eq.section!==lastSec) {
+      html+=`<tr class="sec-hdr"><td colspan="9">${eq.section}</td></tr>`;
+      lastSec=eq.section; eqN=0;
+    }
+    eqN++;
+    const rows = fSt ? eq.rows.filter(r=>stOf(daysL(addM(r.dateRep,r.period)))===fSt) : eq.rows;
+    const span = rows.length;
+
+    rows.forEach((r,ri)=>{
+      const dn=addM(r.dateRep,r.period);
+      const dl=daysL(dn);
+      const st=stOf(dl);
+      const dHtml = dl===null ? '<span class="nv">—</span>'
+        : `<span class="days ${st==='r'?'dr':st==='y'?'dy':'dg'}">${dl>0?'+':''}${dl} дн.</span>`;
+      const sBadge = dl===null ? '<span class="sbadge sbn">Нет даты</span>'
+        : st==='r'? '<span class="sbadge sbr">Просрочено</span>'
+        : st==='y'? '<span class="sbadge sby">Внимание</span>'
+        :            '<span class="sbadge sbg">В норме</span>';
+      const prHtml = r.protocol||'<span class="nv">—</span>';
+      const ntHtml = r.note||'<span class="nv">—</span>';
+
+      if (ri===0) {
+        html+=`<tr class="sub-row">
+          <td rowspan="${span}" class="eq-info">
+            <div style="font-size:10px;color:var(--text2)">${eqN}</div>
+            <div class="eq-name">${eq.name}</div>
+            <div class="eq-meta">${eq.model} &nbsp;·&nbsp; ${eq.serial}</div>
+            <div class="room-pill">${eq.room}</div><br>
+            <button class="edit-link" onclick="openEdit(${eq.id})">✎ Редактировать</button>
+          </td>`;
+      } else {
+        html+=`<tr class="sub-row">`;
+      }
+      html+=`
+          <td><span class="vtype ${vtCls(r.type)}">${r.type}</span></td>
+          <td style="font-size:12px">${r.dateRep?fmtD(new Date(r.dateRep)):'<span class="nv">Не задано</span>'}</td>
+          <td style="font-size:12px">${dn?fmtD(dn):'<span class="nv">—</span>'}</td>
+          <td style="font-size:12px;text-align:center">${r.period} мес.</td>
+          <td>${dHtml}</td>
+          
+          <td style="font-size:11px">${prHtml}</td>
+          <td style="font-size:11px;color:var(--text2)">${ntHtml}</td>
+        </tr>`;
+    });
+  });
+
+  if (!html) html='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text2)">Нет записей по выбранным фильтрам</td></tr>';
+  document.getElementById('TB').innerHTML=html;
+}
+
+/* ── MODAL ── */
+function openAdd() {
+  _editId=null;
+  document.getElementById('mTitle').textContent='Добавить оборудование';
+  ['mName','mSec','mMod','mSer','mRoom'].forEach(id=>document.getElementById(id).value='');
+  buildSubBlocks([{type:'IQ',dateRep:'',period:36,protocol:'',note:''},
+                  {type:'OQ',dateRep:'',period:36,protocol:'',note:''},
+                  {type:'PQ',dateRep:'',period:36,protocol:'',note:''}]);
+  document.getElementById('overlay').classList.add('open');
+}
+
+function openEdit(id) {
+  const eq=DB.find(e=>e.id===id); if(!eq) return;
+  _editId=id;
+  document.getElementById('mTitle').textContent='Редактировать: '+eq.name;
+  document.getElementById('mName').value=eq.name;
+  document.getElementById('mSec').value=eq.section;
+  document.getElementById('mMod').value=eq.model;
+  document.getElementById('mSer').value=eq.serial;
+  document.getElementById('mRoom').value=eq.room;
+  buildSubBlocks(eq.rows);
+  document.getElementById('overlay').classList.add('open');
+}
+
+function buildSubBlocks(rows) {
+  const c=document.getElementById('subRows');
+  c.innerHTML='';
+  rows.forEach(r=>appendSubBlock(r));
+}
+
+const VTYPES=['IQ','OQ','PQ','PV','Целостность HEPA','Мониторинг','Другое'];
+
+function appendSubBlock(r={}) {
+  const c=document.getElementById('subRows');
+  const i=c.children.length+1;
+  const div=document.createElement('div');
+  div.className='sub-block';
+  div.innerHTML=`<h3>Строка ${i}</h3>
+    <button class="rm-sub" onclick="this.closest('.sub-block').remove();renum()">✕</button>
+    <div class="frow">
+      <div class="field"><label>Форма протокола</label>
+        <select class="sr-type">${VTYPES.map(t=>`<option${t===(r.type||'IQ')?' selected':''}>${t}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Периодичность (месяцев)</label>
+        <input class="sr-period" type="number" min="1" max="120" value="${r.period||36}">
+      </div>
+    </div>
+    <div class="frow">
+      <div class="field"><label>Дата отчёта (последняя валидация)</label>
+        <input class="sr-date" type="date" value="${r.dateRep||''}">
+      </div>
+      <div class="field"><label>№ Отчёта / Протокола</label>
+        <input class="sr-proto" type="text" value="${r.protocol||''}" placeholder="ET22111-1_IQ">
+      </div>
+    </div>
+    <div class="field"><label>Примечание</label>
+      <input class="sr-note" type="text" value="${r.note||''}" placeholder="Необязательно">
+    </div>`;
+  c.appendChild(div);
+}
+
+function addSubRow() { appendSubBlock(); }
+
+function renum() {
+  document.querySelectorAll('#subRows .sub-block h3').forEach((h,i)=>h.textContent=`Строка ${i+1}`);
+}
+
+function saveModal() {
+  const name=document.getElementById('mName').value.trim();
+  if (!name) { alert('Введите наименование оборудования'); return; }
+  const rows=[...document.querySelectorAll('#subRows .sub-block')].map(div=>({
+    id:_uid++,
+    type:div.querySelector('.sr-type').value,
+    dateRep:div.querySelector('.sr-date').value,
+    period:parseInt(div.querySelector('.sr-period').value)||36,
+    protocol:div.querySelector('.sr-proto').value.trim(),
+    note:div.querySelector('.sr-note').value.trim(),
+  }));
+  const data={name,section:document.getElementById('mSec').value.trim()||'Прочее',
+    model:document.getElementById('mMod').value.trim(),
+    serial:document.getElementById('mSer').value.trim(),
+    room:document.getElementById('mRoom').value.trim(),rows};
+  if (_editId!==null) {
+    const i=DB.findIndex(e=>e.id===_editId);
+    if(i>=0) DB[i]={...DB[i],...data};
+  } else {
+    DB.push({id:_uid++,...data});
+  }
+  save(); closeModal(); populateFilters(); render();
+}
+
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+document.getElementById('overlay').addEventListener('click',e=>{ if(e.target.id==='overlay') closeModal(); });
+
+/* ── INIT ── */
+loadDB();
+populateFilters();
+render();
+</script>
+</body>
+</html>
